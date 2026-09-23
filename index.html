@@ -727,6 +727,10 @@
     gap:12px;
   }
   .industry-pills span{
+    position:relative;
+    overflow:hidden;
+    isolation:isolate;
+    display:inline-block;
     padding:12px 20px;
     border:1px solid var(--border);
     border-radius:999px;
@@ -734,6 +738,41 @@
     font-weight:500;
     color:var(--ink-soft);
     background:#fff;
+    transition:
+      color .3s ease,
+      background-color .3s ease,
+      border-color .3s ease,
+      box-shadow .35s ease,
+      transform .3s ease;
+  }
+
+  /* soft light that sweeps across the pill on hover */
+  .industry-pills span::before{
+    content:"";
+    position:absolute;
+    top:50%; left:-120%;
+    width:80%; height:180%;
+    transform:translateY(-50%) rotate(15deg);
+    background:linear-gradient(90deg, transparent, rgba(139,92,246,.12), transparent);
+    transition:left .65s ease;
+    pointer-events:none;
+    z-index:0;
+  }
+  .industry-pills span:hover::before{ left:140%; }
+
+  .industry-pills span:hover{
+    color:#5B21B6;
+    background:linear-gradient(135deg, #FFFFFF 0%, #F5EEFF 100%);
+    border-color:#9B6EF3;
+    transform:translateY(-3px);
+    box-shadow:
+      0 0 0 3px rgba(124,58,237,.07),
+      0 6px 20px rgba(124,58,237,.18),
+      0 0 30px rgba(124,58,237,.12);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .industry-pills span, .industry-pills span::before{ transition:none; }
   }
 
   /* ===== WHY ===== */
