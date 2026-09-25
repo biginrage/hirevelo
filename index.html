@@ -1353,7 +1353,9 @@
       </div>
 
       <div>
-        <form id="requirementForm" novalidate>
+        <form id="requirementForm" name="recruitment-requirement" method="POST" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+          <input type="hidden" name="form-name" value="recruitment-requirement">
+          <p hidden><label>Don't fill this out: <input name="bot-field"></label></p>
           <div class="field-grid">
             <div class="field">
               <label for="fullName">Full name</label>
@@ -1420,7 +1422,6 @@
               <textarea id="additional" name="additional"></textarea>
             </div>
           </div>
-
           <div class="form-submit-row">
             <button type="submit" class="btn btn-primary" id="submitBtn">Submit Requirement</button>
             <span class="form-status" id="formStatus"></span>
@@ -1599,12 +1600,8 @@
   })('.reveal-item');
 
   // ===== Requirement form =====
-  // NOTE — INTEGRATION POINT:
-  // This form currently validates input and shows a success state in the browser only.
-  // No submission is sent anywhere yet. To make it live, replace the section marked
-  // "SUBMIT REQUIREMENT HERE" below with a real request — e.g. a fetch() call to your
-  // backend endpoint, a form service (such as Formspree or a serverless function), or
-  // an email-sending API. The collected `data` object already contains every field.
+  // Netlify Forms handles the actual submission; this script keeps the existing
+  // in-page UX while posting the form data to Netlify without a page reload.
   const form = document.getElementById('requirementForm');
   const successPanel = document.getElementById('successPanel');
   const submitBtn = document.getElementById('submitBtn');
@@ -1620,17 +1617,24 @@
   function validateForm() {
     let valid = true;
     form.querySelectorAll('[required]').forEach(field => {
-      if (!field.value || (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value))) {
-        setFieldError(field, field.type === 'email' ? 'Enter a valid work email.' : 'This field is required.');
-        valid = false;
-      } else {
-        setFieldError(field, '');
+      const value = field.value.trim();
+      let message = '';
+      if (!value) {
+        message = 'This field is required.';
+      } else if (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        message = 'Enter a valid work email.';
+      } else if (field.type === 'tel' && !/[0-9]{7,}/.test(value.replace(/\D/g, ''))) {
+        message = 'Enter a valid phone number.';
+      } else if (field.type === 'number' && Number(field.value) < 1) {
+        message = 'Enter at least 1 opening.';
       }
+      setFieldError(field, message);
+      if (message) valid = false;
     });
     return valid;
   }
 
-  form.addEventListener('submit', function (e) {
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
     if (submitBtn.disabled) return;
 
@@ -1643,29 +1647,34 @@
     submitBtn.textContent = 'Submitting…';
     formStatus.textContent = '';
 
-    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const body = new URLSearchParams(new FormData(form));
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+      });
 
-    // ===== SUBMIT REQUIREMENT HERE =====
-    // Example (uncomment and adapt once a backend/service is available):
-    // fetch('/api/requirements', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(data)
-    // }).then(...).catch(...);
+      if (!response.ok) throw new Error('Submission failed');
 
-    setTimeout(() => {
       form.style.display = 'none';
       successPanel.classList.add('show');
+    } catch (error) {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit Requirement';
-    }, 500);
+      formStatus.textContent = 'Something went wrong. Please try again.';
+    }
   });
 
   document.getElementById('resetFormBtn').addEventListener('click', () => {
     form.reset();
     form.style.display = 'block';
     successPanel.classList.remove('show');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Requirement';
+    formStatus.textContent = '';
     form.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
+    form.querySelectorAll('.field-error-msg').forEach(m => m.textContent = '');
   });
 </script>
 
