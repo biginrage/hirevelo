@@ -1353,7 +1353,7 @@
       </div>
 
       <div>
-        <form id="requirementForm" name="recruitment-requirement" method="POST" action="/" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+        <form id="requirementForm" name="recruitment-requirement" method="POST" action="/success.html" data-netlify="true" netlify-honeypot="bot-field">
           <input type="hidden" name="form-name" value="recruitment-requirement">
           <p hidden><label>Don't fill this out: <input name="bot-field"></label></p>
           <div class="field-grid">
@@ -1600,101 +1600,9 @@
   })('.reveal-item');
 
   // ===== Requirement form =====
-  // Netlify Forms handles the submission. The custom UX below keeps the user
-  // on the same page and shows the success panel without a redirect.
-  const form = document.getElementById('requirementForm');
-  const successPanel = document.getElementById('successPanel');
-  const submitBtn = document.getElementById('submitBtn');
-  const formStatus = document.getElementById('formStatus');
-
-  function setFieldError(field, message) {
-    const wrapper = field.closest('.field');
-    if (!wrapper) return;
-    wrapper.classList.toggle('error', !!message);
-    const msgEl = wrapper.querySelector('.field-error-msg');
-    if (msgEl) msgEl.textContent = message || '';
-  }
-
-  function validateForm() {
-    let valid = true;
-
-    form.querySelectorAll('[required]').forEach(field => {
-      const value = field.value.trim();
-      let message = '';
-
-      if (!value) {
-        message = 'This field is required.';
-      } else if (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        message = 'Enter a valid work email.';
-      } else if (field.type === 'tel' && !/[0-9]{7,}/.test(value.replace(/\D/g, ''))) {
-        message = 'Enter a valid phone number.';
-      } else if (field.type === 'number' && Number(field.value) < 1) {
-        message = 'Enter at least 1 opening.';
-      }
-
-      setFieldError(field, message);
-      if (message) valid = false;
-    });
-
-    return valid;
-  }
-
-  form.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    if (submitBtn.disabled) return;
-
-    if (!validateForm()) {
-      formStatus.textContent = 'Please fill in the required fields.';
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting…';
-    formStatus.textContent = '';
-
-    try {
-      const formData = new FormData(form);
-      const body = new URLSearchParams();
-
-      for (const [key, value] of formData.entries()) {
-        body.append(key, value);
-      }
-
-      const response = await fetch('/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
-        },
-        body: body.toString()
-      });
-
-      if (!response.ok) {
-        throw new Error('Netlify form submission failed');
-      }
-
-      form.reset();
-      form.style.display = 'none';
-      successPanel.classList.add('show');
-    } catch (error) {
-      console.error('HireVelo form submission error:', error);
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Requirement';
-      formStatus.textContent = 'Something went wrong. Please try again.';
-    }
-  });
-
-  document.getElementById('resetFormBtn').addEventListener('click', () => {
-    form.reset();
-    form.style.display = 'block';
-    successPanel.classList.remove('show');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Requirement';
-    formStatus.textContent = '';
-    form.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
-    form.querySelectorAll('.field-error-msg').forEach(m => m.textContent = '');
-  });
-
+  // The form is intentionally submitted natively to Netlify Forms.
+  // Netlify detects the HTML form at deploy time and handles the POST,
+  // then redirects the visitor to success.html.
 </script>
 
 </body>
